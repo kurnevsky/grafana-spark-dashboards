@@ -516,11 +516,14 @@ if (executorRanges.length) {
 
 // A "row" with panels about the #'s of active and completed tasks.
 var activeTasks = "threadpool.activeTasks";
-var completeTasks= "threadpool.completeTasks";
+var completeTasks = "threadpool.completeTasks";
+/**
 if (localMode) {
     activeTasks = "DAGScheduler.job.activeJobs";
-    completeTasks= "DAGScheduler.job.allJobs";
+    completeTasks = "DAGScheduler.job.allJobs";
 }
+*/
+
 var threadpool_row = {
   title: "threadpool",
   height: "300px",
