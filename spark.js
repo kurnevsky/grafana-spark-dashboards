@@ -22,6 +22,7 @@ var maxExecutorId = getIntParam(ARGS.maxExecutorId, 20);
 
 var now = false;
 var collapseExecutors = getBoolParam(ARGS.collapseExecutors, true);
+var localMode = getBoolParam(ARGS.localMode, false);
 var sharedTooltip = getBoolParam(ARGS.sharedTooltip, true);
 var legends = getBoolParam(ARGS.legends, false);
 var executorLegends = getBoolParam(ARGS.executorLegends, true);
@@ -325,8 +326,12 @@ function aliasSub(target, find, repl) {
   return "aliasSub(" + target + ", '" + find + "', '" + ((repl == undefined) ? "\\1" : repl) + "')";
 }
 function aliasByExecutorId(target) {
-  return aliasSub(target, '^[^.]+\\.([^.]+)\\..*');
+    if (!localMode)
+        return aliasSub(target, '^[^.]+\\.([^.]+)\\..*');
+    else
+        return alias(target, "LocalMode");
 }
+
 function alias(target, name) { return "alias(" + target + ", '" + name + "')"; }
 function percentileOfSeries(target, percentile) {
   return "percentileOfSeries(" + target + ", " + percentile + ", 'false')";
@@ -337,7 +342,12 @@ function summarize(target, interval, fn) {
 function nonNegativeDerivative(target) { return "nonNegativeDerivative(" + target + ")"; }
 function perSecond(target) { return "perSecond(" + target + ")"; }
 function sumSeries(target) { return "sumSeries(" + target + ")"; }
-function prefix(target, range) { return "$prefix." + (range || '$executorRange') + ".executor." + target; }
+function prefix(target, range) { 
+    if (!localMode)
+        return "$prefix." + (range || '$executorRange') + ".executor." + target; 
+    else
+        return "$prefix.$driver." + target; 
+}
 
 
 // Some panel-JSON-construction helpers.
