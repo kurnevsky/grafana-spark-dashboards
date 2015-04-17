@@ -593,6 +593,45 @@ var driver_row = {
   ]
 };
 
+var streaming_row = {
+  title: "Streaming Staticscs",
+  height: "250px",
+  editable: true,
+  collapse: true,
+  panels: [
+    panel(
+          "Last Batch trends",
+          [
+            alias("$prefix.$driver.jvm.PS-Scavenge.count", "GC count"),
+            alias("$prefix.$driver.jvm.PS-Scavenge.time", "GC time")
+          ],
+          {
+            nullPointMode: 'connected',
+            seriesOverrides: [
+              {
+                alias: "GC time",
+                yaxis: 2
+              }
+            ]
+          }
+    ),
+    panel(
+          "Complete Batches per minute",
+          [ alias(nonNegativeDerivative(
+                        summarize(
+                              "$prefix.$driver.jvm.PS-Scavenge.time",
+                              '1m',
+                              'sum'
+                        )
+                  ), 'Complete Batch Per Minute') ],
+          {
+            nullPointMode: 'connected',
+            pointradius: 1
+          }
+    )
+  ]
+};
+
 
 // A "row" with HDFS I/O stats.
 var hdfs_row =     {
@@ -757,6 +796,7 @@ dashboard.rows = [
   threadpool_row,
   driver_row,
   hdfs_row,
+  streaming_row,
   carbon_row
 ];
 
