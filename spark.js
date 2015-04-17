@@ -418,7 +418,7 @@ function executorJvmPanel(id, opts) {
 function executorBlockMemeoryPanel(id, opts) {
   opts = opts || {};
   opts.nullPointMode = 'connected';
-  opts.stacked = true;
+  opts.stack = true;
   return panel(
         id + ": Block Manager Status",
         [
@@ -634,7 +634,7 @@ var streaming_row = {
     panel(
           "Last Batch trends",
           [
-            alias(diffSeries("$prefix.$driver.*.StreamingMetrics.streaming.lastCompletedBatch_processingEndTime", "$prefix.$driver.*.StreamingMetrics.streaming.lastCompletedBatch_processingStartTime"), "Batch Duration"),
+            alias("diffSeries($prefix.$driver.*.StreamingMetrics.streaming.lastCompletedBatch_processingEndTime, $prefix.$driver.*.StreamingMetrics.streaming.lastCompletedBatch_processingStartTime)", "Batch Duration"),
             alias("$prefix.$driver.*.StreamingMetrics.streaming.lastCompletedBatch_schedulingDelay", "Schedule Delay")
           ],
           {
