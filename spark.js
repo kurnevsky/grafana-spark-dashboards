@@ -329,7 +329,7 @@ function aliasByExecutorId(target) {
     if (!localMode)
         return aliasSub(target, '^[^.]+\\.([^.]+)\\..*');
     else
-        return alias(target, "LocalMode");
+        return alias(target, "Local");
 }
 
 function alias(target, name) { return "alias(" + target + ", '" + name + "')"; }
@@ -415,6 +415,27 @@ function executorJvmPanel(id, opts) {
   );
 }
 
+function executorBlockMemeoryPanel(id, opts) {
+  opts = opts || {};
+  opts.nullPointMode = 'connected';
+  opts.stacked = true
+  return panel(
+        id + ": Block Manager Status",
+        [
+          alias(
+               
+                "$prefix." + id + "..BlockManager.memory.memUsed_MB",
+                "Used Memory",
+          ),
+          alias(
+                "$prefix." + id + ".BlockManager.memory.remainingMem_MB",
+                "Remaining Memory"
+          )
+        ],
+        opts
+  );
+}
+
 // Return a panel showing one metric over many executors.
 function multiExecutorPanel(title, target, opts, percentiles, fns) {
   var targets = [];
@@ -470,7 +491,7 @@ function multiExecutorPanel(title, target, opts, percentiles, fns) {
 var dashboard = {
   title: app.prefix,
   rows: [],
-  style: "light",
+  style: "dark",
   time: {
     from: app.from,
     to: app.to,
@@ -499,17 +520,27 @@ var executor_row = {
   panels: []
 }
 
+var executor_memory = {
+  title: "Executor Memories",
+  height: "300px",
+  editable: true,
+  collapse: collapseExecutors,
+  panels: []
+}
+
 // Add panels to the executor row based on the "executors" query
 // param, if present; otherwise, use create @maxExecutorId panels.
 if (executorRanges.length) {
   executorRanges.forEach(function(executorRange) {
     for (var executorId = executorRange.from; executorId <= executorRange.to; ++executorId) {
       executor_row.panels.push(executorJvmPanel(executorId, { span: 3, legend: legend(executorLegends) }));
+      executor_row.panels.push(executorBlockMemeoryPanel(executorId, { span: 3, legend: legend(executorLegends) }));
     }
   });
 } else {
   for (var executorId = 1; executorId <= maxExecutorId; ++executorId) {
     executor_row.panels.push(executorJvmPanel(executorId, { span: 3 }));
+    executor_memory.panels.push(executorBlockMemeoryPanel(executorId, { span: 3 }));
   }
 }
 
@@ -589,7 +620,8 @@ var driver_row = {
             nullPointMode: 'connected',
             pointradius: 1
           }
-    )
+    ),
+    executorBlockMemeoryPanel("$driver")
   ]
 };
 
@@ -602,14 +634,15 @@ var streaming_row = {
     panel(
           "Last Batch trends",
           [
-            alias("$prefix.$driver.jvm.PS-Scavenge.count", "GC count"),
-            alias("$prefix.$driver.jvm.PS-Scavenge.time", "GC time")
+            alias(diffSeries("$prefix.$driver.*.StreamingMetrics.streaming.lastCompletedBatch_processingEndTime", "$prefix.$driver.*.StreamingMetrics.streaming.lastCompletedBatch_processingStartTime"), "Batch Duration"),
+            alias("$prefix.$driver.*.StreamingMetrics.streaming.lastCompletedBatch_schedulingDelay", "Schedule Delay")
           ],
           {
             nullPointMode: 'connected',
+            span: 6,
             seriesOverrides: [
               {
-                alias: "GC time",
+                alias: "Schedule Delay",
                 yaxis: 2
               }
             ]
@@ -619,12 +652,13 @@ var streaming_row = {
           "Complete Batches per minute",
           [ alias(nonNegativeDerivative(
                         summarize(
-                              "$prefix.$driver.jvm.PS-Scavenge.time",
+                              "$prefix.$driver.*.StreamingMetrics.streaming.totalCompletedBatches",
                               '1m',
-                              'sum'
+                              'max'
                         )
                   ), 'Complete Batch Per Minute') ],
           {
+            span: 6,
             nullPointMode: 'connected',
             pointradius: 1
           }
@@ -726,7 +760,7 @@ var carbon_row = {
   title: "Carbon row",
   height: "250px",
   editable: true,
-  collapse: false,
+  collapse: true,
   panels: [
     panel(
           "Carbon Stats - metrics collected, points per update",
@@ -797,6 +831,7 @@ dashboard.rows = [
   driver_row,
   hdfs_row,
   streaming_row,
+  executor_memory,
   carbon_row
 ];
 
