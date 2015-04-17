@@ -515,12 +515,6 @@ if (executorRanges.length) {
 
 
 // A "row" with panels about the #'s of active and completed tasks.
-var activeTasks = "threadpool.activeTasks";
-var completeTasks = "threadpool.completeTasks";
-if (localMode) {
-    activeTasks = "DAGScheduler.job.activeJobs";
-    completeTasks = "DAGScheduler.job.allJobs";
-}
 
 
 var threadpool_row = {
@@ -528,8 +522,8 @@ var threadpool_row = {
   height: "300px",
   panels: [
     multiExecutorPanel(
-          "Active tasks (stacked per executor)",
-          "threadpool.activeTasks",
+          localMode ? "ActiveJobs" : "Active tasks (stacked per executor)",
+          localMode ? "DAGScheduler.job.activeJobs" : "threadpool.activeTasks",
           {
             stack: true,
             fill: 10,
@@ -540,18 +534,18 @@ var threadpool_row = {
           }
     ),
     multiExecutorPanel(
-          "Completed tasks per executor",
-          "threadpool.completeTasks",
+          localMode ? "Complete Jobs" : "Completed tasks per executor",
+          localMode ?  "DAGScheduler.job.allJobs" : "threadpool.completeTasks",
           {},
           percentilesAndTotals ? ['total'] : []
     ),
     panel(
-          "Completed tasks per minute per executor",
+          localMode ? "Completed Jobs per minute" : "Completed tasks per minute per executor",
           [
             aliasByExecutorId(
                   nonNegativeDerivative(
                         summarize(
-                              prefix("threadpool.completeTasks"),
+                              prefix(localMode ?  "DAGScheduler.job.allJobs" : "threadpool.completeTasks"),
                               '1m',
                               'max'
                         )
