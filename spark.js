@@ -332,7 +332,7 @@ function aliasByExecutorId(target) {
         return alias(target, "Local");
 }
 
-function scale(target, factor) { return "scale(" + target + ", '" + factor + "')"; }
+function scale(target, factor) { return "scale(" + target + ", " + factor + ")"; }
 function alias(target, name) { return "alias(" + target + ", '" + name + "')"; }
 function percentileOfSeries(target, percentile) {
   return "percentileOfSeries(" + target + ", " + percentile + ", 'false')";
