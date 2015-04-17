@@ -547,7 +547,7 @@ function completeTaskPanel() {
         return panel(
                 "Stages stastics",
                  [alias(prefix("DAGScheduler.stage.waitingStages"), "Waiting Stages"),
-                  alias(prefix("DAGScheduler.stage.runningStages"), "Running Stages")]
+                  alias(prefix("DAGScheduler.stage.runningStages"), "Running Stages")],
                 { pointradius: 1 }
              );
     } else {
