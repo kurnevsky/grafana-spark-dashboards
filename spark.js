@@ -332,6 +332,7 @@ function aliasByExecutorId(target) {
         return alias(target, "Local");
 }
 
+function scale(target, factor) { return "scale(" + target + ", '" + factor + "')"; }
 function alias(target, name) { return "alias(" + target + ", '" + name + "')"; }
 function percentileOfSeries(target, percentile) {
   return "percentileOfSeries(" + target + ", " + percentile + ", 'false')";
@@ -421,7 +422,7 @@ function executorBlockMemeoryPanel(id, opts) {
   opts.stack = true;
   opts.fill = 10;
   return panel(
-        id + ": Block Manager Status",
+        id + ": Block Manager Status (M)",
         [
           alias("$prefix." + id + ".BlockManager.memory.memUsed_MB","Used Memory"),
           alias("$prefix." + id + ".BlockManager.memory.remainingMem_MB", "Remaining Memory")
@@ -541,6 +542,23 @@ if (executorRanges.length) {
 
 // A "row" with panels about the #'s of active and completed tasks.
 
+function completeTaskPanel() {
+    if (localMode) {
+        return panel(
+                "Stages stastics",
+                 [alias(prefix("DAGScheduler.stage.waitingStages"), "Waiting Stages"),
+                  alias(prefix("DAGScheduler.stage.runningStages"), "Running Stages")]
+                { pointradius: 1 }
+             );
+    } else {
+        return multiExecutorPanel(
+                "Completed tasks per executor",
+                "threadpool.completeTasks",
+                {},
+                percentilesAndTotals ? ['total'] : []
+                );
+    }
+}
 
 var threadpool_row = {
   title: "threadpool",
@@ -558,12 +576,7 @@ var threadpool_row = {
             }
           }
     ),
-    multiExecutorPanel(
-          localMode ? "Complete Jobs" : "Completed tasks per executor",
-          localMode ?  "DAGScheduler.job.allJobs" : "threadpool.completeTasks",
-          {},
-          percentilesAndTotals ? ['total'] : []
-    ),
+    completeTaskPanel(),
     panel(
           localMode ? "Completed Jobs per minute" : "Completed tasks per minute per executor",
           [
@@ -628,7 +641,7 @@ var streaming_row = {
     panel(
           "Last Batch trends",
           [
-            alias("diffSeries($prefix.$driver.*.StreamingMetrics.streaming.lastCompletedBatch_processingEndTime, $prefix.$driver.*.StreamingMetrics.streaming.lastCompletedBatch_processingStartTime)", "Batch Duration"),
+            alias(scale("diffSeries($prefix.$driver.*.StreamingMetrics.streaming.lastCompletedBatch_processingEndTime, $prefix.$driver.*.StreamingMetrics.streaming.lastCompletedBatch_processingStartTime)", 0.001), "Batch Duration"),
             alias("$prefix.$driver.*.StreamingMetrics.streaming.lastCompletedBatch_schedulingDelay", "Schedule Delay")
           ],
           {
