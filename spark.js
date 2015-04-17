@@ -418,13 +418,13 @@ function executorJvmPanel(id, opts) {
 function executorBlockMemeoryPanel(id, opts) {
   opts = opts || {};
   opts.nullPointMode = 'connected';
-  opts.stacked = true
+  opts.stacked = true;
   return panel(
         id + ": Block Manager Status",
         [
           alias(
                
-                "$prefix." + id + "..BlockManager.memory.memUsed_MB",
+                "$prefix." + id + ".BlockManager.memory.memUsed_MB",
                 "Used Memory",
           ),
           alias(
