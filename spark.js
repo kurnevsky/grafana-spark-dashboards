@@ -419,6 +419,7 @@ function executorBlockMemeoryPanel(id, opts) {
   opts = opts || {};
   opts.nullPointMode = 'connected';
   opts.stack = true;
+  opts.fill = 10;
   return panel(
         id + ": Block Manager Status",
         [
