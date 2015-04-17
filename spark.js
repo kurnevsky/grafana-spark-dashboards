@@ -646,13 +646,20 @@ var streaming_row = {
           ],
           {
             nullPointMode: 'connected',
-            span: 6,
             seriesOverrides: [
               {
                 alias: "Schedule Delay",
                 yaxis: 2
               }
             ]
+          }
+    ),
+    panel(
+          "Waiting batches",
+          [ alias("$prefix.$driver.*.StreamingMetrics.streaming.waitingBatches", 'Waiting Batches') ],
+          {
+            nullPointMode: 'connected',
+            pointradius: 1
           }
     ),
     panel(
@@ -665,7 +672,6 @@ var streaming_row = {
                         )
                   ), 'Complete Batch Per Minute') ],
           {
-            span: 6,
             nullPointMode: 'connected',
             pointradius: 1
           }
