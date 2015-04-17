@@ -422,15 +422,8 @@ function executorBlockMemeoryPanel(id, opts) {
   return panel(
         id + ": Block Manager Status",
         [
-          alias(
-               
-                "$prefix." + id + ".BlockManager.memory.memUsed_MB",
-                "Used Memory",
-          ),
-          alias(
-                "$prefix." + id + ".BlockManager.memory.remainingMem_MB",
-                "Remaining Memory"
-          )
+          alias("$prefix." + id + ".BlockManager.memory.memUsed_MB","Used Memory"),
+          alias("$prefix." + id + ".BlockManager.memory.remainingMem_MB", "Remaining Memory")
         ],
         opts
   );
@@ -534,7 +527,7 @@ if (executorRanges.length) {
   executorRanges.forEach(function(executorRange) {
     for (var executorId = executorRange.from; executorId <= executorRange.to; ++executorId) {
       executor_row.panels.push(executorJvmPanel(executorId, { span: 3, legend: legend(executorLegends) }));
-      executor_row.panels.push(executorBlockMemeoryPanel(executorId, { span: 3, legend: legend(executorLegends) }));
+      executor_memory.panels.push(executorBlockMemeoryPanel(executorId, { span: 3, legend: legend(executorLegends) }));
     }
   });
 } else {
