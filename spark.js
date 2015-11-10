@@ -27,6 +27,7 @@ var sharedTooltip = getBoolParam(ARGS.sharedTooltip, true);
 var legends = getBoolParam(ARGS.legends, false);
 var executorLegends = getBoolParam(ARGS.executorLegends, true);
 var percentilesAndTotals = getBoolParam(ARGS.percentiles, false);
+var perSecondExists = getBoolParam(ARGS.perSecondExists, false);
 
 
 function fetchYarnApps() {
@@ -341,7 +342,7 @@ function summarize(target, interval, fn) {
   return "summarize(" + target + ", '" + (interval || '10s') + "', '" + (fn || 'avg') + "', false)";
 }
 function nonNegativeDerivative(target) { return "nonNegativeDerivative(" + target + ")"; }
-function perSecond(target) { return "perSecond(" + target + ")"; }
+function perSecond(target) { return perSecondExists ? "perSecond(" + target + ")" : "scaleToSeconds(nonNegativeDerivative(" + target + "),1)"; }
 function sumSeries(target) { return "sumSeries(" + target + ")"; }
 function prefix(target, range) { 
     if (!localMode)
