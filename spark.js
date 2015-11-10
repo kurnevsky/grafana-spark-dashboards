@@ -8,6 +8,11 @@ var window, document, ARGS, $, jQuery, moment, kbn;
 // All url parameters are available via the ARGS object
 var ARGS;
 
+function getStringParam(i, def) {
+  if (_.isUndefined(i)) return def;
+  return i;
+}
+
 function getBoolParam(b, def) {
   if (_.isUndefined(b)) return def;
   return b=='1' || b=='true' || b=='on' || b.toLowerCase()=='yes';
@@ -28,6 +33,7 @@ var legends = getBoolParam(ARGS.legends, false);
 var executorLegends = getBoolParam(ARGS.executorLegends, true);
 var percentilesAndTotals = getBoolParam(ARGS.percentiles, false);
 var perSecondExists = getBoolParam(ARGS.perSecondExists, false);
+var globalPrefix = getStringParam(ARGS.globalPrefix, "");
 
 
 function fetchYarnApps() {
@@ -214,7 +220,7 @@ var prefixTemplateVar = {
       value: app.prefix
     }
   ],
-  query: "*",
+  query: globalPrefix + "*",
   allFormat: "glob",
   includeAll: true,
   datasource: "graphite",
@@ -327,10 +333,12 @@ function aliasSub(target, find, repl) {
   return "aliasSub(" + target + ", '" + find + "', '" + ((repl == undefined) ? "\\1" : repl) + "')";
 }
 function aliasByExecutorId(target) {
-    if (!localMode)
-        return aliasSub(target, '^[^.]+\\.([^.]+)\\..*');
-    else
+    if (!localMode) {
+        var skip = (globalPrefix.match(/\./g) || []).length + 1;
+        return aliasSub(target, '^([^.]+\\.){' + skip + '}([^.]+)\\..*', "\\2");
+    } else {
         return alias(target, "Local");
+    }
 }
 
 function scale(target, factor) { return "scale(" + target + ", " + factor + ")"; }
@@ -346,9 +354,9 @@ function perSecond(target) { return perSecondExists ? "perSecond(" + target + ")
 function sumSeries(target) { return "sumSeries(" + target + ")"; }
 function prefix(target, range) { 
     if (!localMode)
-        return "$prefix." + (range || '$executorRange') + ".executor." + target; 
+        return globalPrefix + "$prefix." + (range || '$executorRange') + ".executor." + target;
     else
-        return "$prefix.$driver." + target; 
+        return globalPrefix + "$prefix.$driver." + target;
 }
 
 
@@ -402,14 +410,14 @@ function executorJvmPanel(id, opts) {
         [
           aliasSub(
                 aliasSub(
-                      "$prefix." + id + ".jvm.pools.*.usage",
+                      globalPrefix + "$prefix." + id + ".jvm.pools.*.usage",
                       "^.*\\.([^.]*)\\.usage.*"
                 ),
                 "(PS-)?(-Space)?-?",
                 ""
           ),
           aliasSub(
-                "$prefix." + id + ".jvm.{non-heap,heap}.usage",
+                globalPrefix + "$prefix." + id + ".jvm.{non-heap,heap}.usage",
                 ".*\\.((non-)?heap)\\..*"
           )
         ],
@@ -425,8 +433,8 @@ function executorBlockMemeoryPanel(id, opts) {
   return panel(
         id + ": Block Manager Status (M)",
         [
-          alias("$prefix." + id + ".BlockManager.memory.memUsed_MB","Used Memory"),
-          alias("$prefix." + id + ".BlockManager.memory.remainingMem_MB", "Remaining Memory")
+          alias(globalPrefix + "$prefix." + id + ".BlockManager.memory.memUsed_MB","Used Memory"),
+          alias(globalPrefix + "$prefix." + id + ".BlockManager.memory.remainingMem_MB", "Remaining Memory")
         ],
         opts
   );
@@ -607,8 +615,8 @@ var driver_row = {
     panel(
           "Driver scavenge GC",
           [
-            alias("$prefix.$driver.jvm.PS-Scavenge.count", "GC count"),
-            alias("$prefix.$driver.jvm.PS-Scavenge.time", "GC time")
+            alias(globalPrefix + "$prefix.$driver.jvm.PS-Scavenge.count", "GC count"),
+            alias(globalPrefix + "$prefix.$driver.jvm.PS-Scavenge.time", "GC time")
           ],
           {
             nullPointMode: 'connected',
@@ -623,7 +631,7 @@ var driver_row = {
     executorJvmPanel("$driver"),
     panel(
           "Driver GC Time/s",
-          [ alias(perSecond(summarize("$prefix.$driver.jvm.PS-Scavenge.time")), 'GC time') ],
+          [ alias(perSecond(summarize(globalPrefix + "$prefix.$driver.jvm.PS-Scavenge.time")), 'GC time') ],
           {
             nullPointMode: 'connected',
             pointradius: 1
@@ -642,8 +650,8 @@ var streaming_row = {
     panel(
           "Last Batch trends",
           [
-            alias(scale("diffSeries($prefix.$driver.*.StreamingMetrics.streaming.lastCompletedBatch_processingEndTime, $prefix.$driver.*.StreamingMetrics.streaming.lastCompletedBatch_processingStartTime)", 0.001), "Batch Duration"),
-            alias("$prefix.$driver.*.StreamingMetrics.streaming.lastCompletedBatch_schedulingDelay", "Schedule Delay")
+            alias(scale("diffSeries(" + globalPrefix + "$prefix.$driver.*.StreamingMetrics.streaming.lastCompletedBatch_processingEndTime, " + globalPrefix + "$prefix.$driver.*.StreamingMetrics.streaming.lastCompletedBatch_processingStartTime)", 0.001), "Batch Duration"),
+            alias(globalPrefix + "$prefix.$driver.*.StreamingMetrics.streaming.lastCompletedBatch_schedulingDelay", "Schedule Delay")
           ],
           {
             nullPointMode: 'connected',
@@ -657,7 +665,7 @@ var streaming_row = {
     ),
     panel(
           "Waiting batches",
-          [ alias("$prefix.$driver.*.StreamingMetrics.streaming.waitingBatches", 'Waiting Batches') ],
+          [ alias(globalPrefix + "$prefix.$driver.*.StreamingMetrics.streaming.waitingBatches", 'Waiting Batches') ],
           {
             nullPointMode: 'connected',
             pointradius: 1
@@ -667,7 +675,7 @@ var streaming_row = {
           "Complete Batches per minute",
           [ alias(nonNegativeDerivative(
                         summarize(
-                              "$prefix.$driver.*.StreamingMetrics.streaming.totalCompletedBatches",
+                              globalPrefix + "$prefix.$driver.*.StreamingMetrics.streaming.totalCompletedBatches",
                               '1m',
                               'max'
                         )
@@ -852,3 +860,4 @@ dashboard.rows = [
 console.log("Returning: %O", dashboard);
 
 return dashboard;
+
