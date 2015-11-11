@@ -34,6 +34,7 @@ var executorLegends = getBoolParam(ARGS.executorLegends, true);
 var percentilesAndTotals = getBoolParam(ARGS.percentiles, false);
 var perSecondExists = getBoolParam(ARGS.perSecondExists, false);
 var globalPrefix = getStringParam(ARGS.globalPrefix, "");
+var summarizeInterval = getStringParam(ARGS.summarizeInterval, "10s");
 
 
 function fetchYarnApps() {
@@ -347,7 +348,7 @@ function percentileOfSeries(target, percentile) {
   return "percentileOfSeries(" + target + ", " + percentile + ", 'false')";
 }
 function summarize(target, interval, fn) {
-  return "summarize(" + target + ", '" + (interval || '10s') + "', '" + (fn || 'avg') + "', false)";
+  return "summarize(" + target + ", '" + (interval || summarizeInterval) + "', '" + (fn || 'avg') + "', false)";
 }
 function nonNegativeDerivative(target) { return "nonNegativeDerivative(" + target + ")"; }
 function perSecond(target) { return perSecondExists ? "perSecond(" + target + ")" : "scaleToSeconds(nonNegativeDerivative(" + target + "),1)"; }
@@ -697,7 +698,7 @@ var hdfs_row =     {
   collapse: false,
   panels: [
     multiExecutorPanel(
-          "HDFS reads/s, 10s avgs",
+          "HDFS reads/s, " + summarizeInterval + " avgs",
           "filesystem.hdfs.read_ops",
           {
             span: 6,
@@ -738,7 +739,7 @@ var hdfs_row =     {
           percentilesAndTotals ? [ 25, 50, 75, 'total' ] : []
     ),
     multiExecutorPanel(
-          "HDFS bytes read/s/executor, 10s avgs",
+          "HDFS bytes read/s/executor, " + summarizeInterval + " avgs",
           "filesystem.hdfs.read_bytes",
           {
             y_formats: [
